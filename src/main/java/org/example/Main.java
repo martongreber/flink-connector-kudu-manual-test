@@ -1,6 +1,8 @@
 package org.example;
 
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.connector.kudu.connector.converter.RowResultRowConverter;
@@ -25,13 +27,15 @@ public class Main {
                     CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION
             );
 
+            env.setRestartStrategy(RestartStrategies.fixedDelayRestart( 3, Time.seconds(10)));
+
             KuduSource<Row> kuduSource =
                     new KuduSourceBuilder<Row>()
                             .setReaderConfig(getReaderConfig())
                             .setTableInfo(getTableInfo())
                             .setRowResultConverter(new RowResultRowConverter())
                             .setBoundedness(Boundedness.CONTINUOUS_UNBOUNDED)
-                            .setDiscoveryPeriod(Duration.ofSeconds(1))
+                            .setDiscoveryPeriod(Duration.ofSeconds(10))
                             .build();
 
             // Read from Kudu and print
